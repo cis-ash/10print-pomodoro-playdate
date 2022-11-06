@@ -157,27 +157,29 @@ setup_timer(chosen_id)
 
 local function update_text()
 	gfx.setFont(font)
-	-- gfx.clear(white)
 	gfx.setColor(white)
-	gfx.fillRect(0,0, 400, 55)
+	gfx.fillRect(0,0, 400, 65)
 		
 	local id_name = ""
 	if chosen_id == timers.work then id_name = "work timer" end
 	if chosen_id == timers.break_short then id_name = "short break" end
 	if chosen_id == timers.break_long then id_name = "long break" end
-	gfx.drawText(id_name, 5,0)
 
 	local status_txt = ""
-	if tstatus == tstate.ready then status_txt = "ready" end
-	if tstatus == tstate.running then status_txt = "running" end
-	if tstatus == tstate.paused then status_txt = "paused" end
-	if tstatus == tstate.complete then status_txt = "completed" end
-	gfx.drawText(status_txt,5, 20)
-	-- format time to minutes seconts
-	-- local minutes = math.floor(current_timer.timeLeft/ 60000)
-	-- local seconds = (current_timer.timeLeft / 1000) - minutes * 60
-	-- local time_string = string.format("%02.0f : %02.0f", minutes, seconds)
-	-- gfx.drawText("time left "..time_string,5,45)
+	if tstatus == tstate.ready then
+		status_txt = "ready"
+		gfx.drawTextAligned("change timer < >\nstart timer Ⓐ", 395,0, kTextAlignment.right)
+	end
+	-- if tstatus == tstate.running then status_txt = "running" end
+	if tstatus == tstate.paused then
+		status_txt = "paused"
+		gfx.drawTextAligned("resume timer Ⓐ\nfinish timer Ⓑ", 395,0, kTextAlignment.right)
+	end
+	if tstatus == tstate.complete then
+		status_txt = "completed"
+		gfx.drawTextAligned("stop alarm Ⓐ", 395,0, kTextAlignment.right)
+	end
+	gfx.drawText(id_name.."\n"..status_txt, 5,0)
 end
 
 
@@ -187,6 +189,7 @@ local printtexture = gfx.image.new(28, 20)
 function draw_10print(_off_x, _off_y, _cellsize)
 	gfx.setColor(white)
 	gfx.fillRect(_off_x - _cellsize, _off_y - _cellsize, (printtexture.width + 2)*_cellsize, (printtexture.height + 2)*_cellsize)
+	
 	gfx.lockFocus(printtexture)
 		gfx.clear(white)
 		gfx.setFont(font10print)
@@ -195,11 +198,11 @@ function draw_10print(_off_x, _off_y, _cellsize)
 		local time_string = string.format("%02.0f:%02.0f", minutes, seconds)
 		gfx.drawText(time_string,1,6)
 	gfx.unlockFocus()
-	-- printtexture:draw(10,100)
+	
 	gfx.setLineCapStyle(gfx.kLineCapStyleSquare)
-	-- gfx.setLineCapStyle(gfx.kLineCapStyleRound)
 	gfx.setLineWidth(7)
 	gfx.setColor(black)
+	
 	for x=0, printtexture.width do
 		for y=0, printtexture.height do
 			local diagonal = printtexture:sample(x,y)
@@ -313,7 +316,6 @@ function pd.update()
 	else
 		draw_10print(-4, -30, 15)
 	end
-	
 	-- pd.drawFPS(385,225)
 	
 	pd.timer.updateTimers() -- manual said some built-in things need it to function
