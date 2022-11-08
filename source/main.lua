@@ -191,8 +191,10 @@ function draw_10print(_off_x, _off_y, _cellsize)
 	gfx.fillRect(_off_x - _cellsize, _off_y - _cellsize, (printtexture.width + 2)*_cellsize, (printtexture.height + 2)*_cellsize)
 	
 	gfx.lockFocus(printtexture)
-		gfx.clear(white)
+		gfx.clear(clear) -- make clear
 		gfx.setFont(font10print)
+		gfx.setColor(white)
+		gfx.fillRect(0,5, 28, 9)
 		local minutes = math.floor(current_timer.timeLeft/ 60000)
 		local seconds = (current_timer.timeLeft / 1000) - minutes * 60
 		local time_string = string.format("%02.0f:%02.0f", minutes, seconds)
@@ -208,7 +210,21 @@ function draw_10print(_off_x, _off_y, _cellsize)
 			local diagonal = printtexture:sample(x,y)
 			
 			local corner = geo.point.new(_off_x + x * _cellsize, _off_y + y * _cellsize)
+			local flipped = nil
+			
 			if diagonal == black then
+				flipped = true
+			elseif diagonal == white then
+				flipped = false
+			else
+				if tstatus == tstate.running then
+					flipped = math.random() > 0.75
+				else
+					flipped = false
+				end
+			end
+			
+			if flipped then
 				gfx.drawLine(corner.x, corner.y, corner.x + _cellsize, corner.y + _cellsize)
 			else
 				gfx.drawLine(corner.x, corner.y + _cellsize, corner.x + _cellsize, corner.y)
@@ -217,8 +233,9 @@ function draw_10print(_off_x, _off_y, _cellsize)
 	end
 end
 
+
 function pd.update()
-	
+
 	
 	if tstatus == tstate.complete then
 		if pd.buttonJustPressed(pd.kButtonA) then
@@ -250,6 +267,7 @@ function pd.update()
 			setup_timer(chosen_id)
 			tstatus = tstate.ready
 			print("complete->ready")
+			pd.setAutoLockDisabled(false)
 			pd.display.setRefreshRate(10)
 		end
 	elseif tstatus == tstate.running then
@@ -288,6 +306,7 @@ function pd.update()
 			end
 			-- print("starting timer")
 			print("ready->running")
+			pd.setAutoLockDisabled(true)
 			pd.display.setRefreshRate(1)
 		end
 	elseif tstatus == tstate.paused then 
