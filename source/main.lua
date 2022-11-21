@@ -2,14 +2,9 @@
 
 import "Corelibs/object"
 import "Corelibs/graphics"
-import "Corelibs/sprites"
 import "Corelibs/timer"
 import "Corelibs/ui"
 import "Corelibs/math"
-import "Corelibs/crank"
-import "Corelibs/keyboard"
-
-import "Corelibs/utilities/sampler"-- this should go before final version
 
 --#endregion
 
@@ -24,7 +19,6 @@ local snd <const> = pd.sound
 local black <const> = gfx.kColorBlack
 local white <const> = gfx.kColorWhite
 local clear <const> = gfx.kColorClear
-local lerp <const> = pd.math.lerp
 
 --#endregion
 
@@ -74,9 +68,16 @@ end)
 current_timer:pause()
 current_timer.discardOnCompletion = false
 
-local update_screen_timer = pd.timer.new(1.0, function ()
+local update_screen_timer = pd.timer.new(1000.0, function ()
 	-- update screen
+	slow_update_draw()
 end)
+
+function slow_update_draw()
+	-- print("slow update")
+	draw_10print(-4, -30, 15)
+end
+
 update_screen_timer:pause()
 update_screen_timer.discardOnCompletion = false
 update_screen_timer.repeats = true
@@ -233,6 +234,7 @@ function draw_10print(_off_x, _off_y, _cellsize)
 	end
 end
 
+local slow_update = false
 
 function pd.update()
 
@@ -252,7 +254,7 @@ function pd.update()
 					-- print("shortbreak time")
 				else
 					chosen_id = timers.break_long
-					-- print("longbreaktime")
+					-- print("longbreak time")
 				end
 				
 				setup_timer(chosen_id)
@@ -268,7 +270,8 @@ function pd.update()
 			tstatus = tstate.ready
 			print("complete->ready")
 			pd.setAutoLockDisabled(false)
-			pd.display.setRefreshRate(10)
+			-- pd.display.setRefreshRate(10)
+			stop_slow_update()
 		end
 	elseif tstatus == tstate.running then
 		if pd.buttonJustPressed(pd.kButtonA) then
@@ -276,7 +279,8 @@ function pd.update()
 			tstatus = tstate.paused
 			current_timer:pause()
 			sfx_pauseresume()
-			pd.display.setRefreshRate(10)
+			-- pd.display.setRefreshRate(10)
+			stop_slow_update()
 		end
 		-- if timer runs out - go to complete state
 	elseif tstatus == tstate.ready then
@@ -307,7 +311,8 @@ function pd.update()
 			-- print("starting timer")
 			print("ready->running")
 			pd.setAutoLockDisabled(true)
-			pd.display.setRefreshRate(1)
+			-- pd.display.setRefreshRate(1)
+			start_slow_update()
 		end
 	elseif tstatus == tstate.paused then 
 		if pd.buttonJustPressed(pd.kButtonA) then
@@ -315,27 +320,42 @@ function pd.update()
 			tstatus = tstate.running
 			current_timer:start()
 			sfx_pauseresume()
-			pd.display.setRefreshRate(1)
+			-- pd.display.setRefreshRate(1)
+			start_slow_update()
+			
 		end
 		if pd.buttonJustPressed(pd.kButtonB) then
-			-- print("paused->reset")
-			-- tstatus = tstate.ready
 			print("paused->complete")
 			sfx_alarm()
 			tstatus = tstate.complete -- for debug
 			current_timer:reset()
 			current_timer:pause()
-			pd.display.setRefreshRate(10)
+			-- pd.display.setRefreshRate(10)
+			stop_slow_update()
+			
 		end
 	end
 	
-	if tstatus == tstate.complete or tstatus == tstate.ready or tstatus == tstate.paused then
+	-- if tstatus == tstate.complete or tstatus == tstate.ready or tstatus == tstate.paused then
+	if not slow_update then
 		draw_10print(-4, 0, 15)
 		update_text()
 	else
-		draw_10print(-4, -30, 15)
+		-- draw_10print(-4, -30, 15)
 	end
 	-- pd.drawFPS(385,225)
 	
-	pd.timer.updateTimers() -- manual said some built-in things need it to function
+	pd.timer.updateTimers()
+end
+
+function start_slow_update()
+	update_screen_timer:reset()
+	update_screen_timer:start()
+	slow_update_draw()
+	slow_update = true
+end
+
+function stop_slow_update()
+	update_screen_timer:pause()
+	slow_update = false
 end
